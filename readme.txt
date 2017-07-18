@@ -1,5 +1,5 @@
-=== Advanced Custom Fields: FIELD_LABEL Field ===
-Contributors: AUTHOR_NAME
+=== Advanced Custom Fields: Image Pins Field ===
+Contributors: J.Kirchartz
 Tags: PLUGIN_TAGS
 Requires at least: 3.5
 Tested up to: 3.8.1
@@ -7,7 +7,7 @@ Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-SHORT_DESCRIPTION
+Add pins or markers to an image
 
 == Description ==
 
@@ -22,8 +22,8 @@ This ACF field type is compatible with:
 == Installation ==
 
 1. Copy the `acf-image_pins` folder into your `wp-content/plugins` folder
-2. Activate the FIELD_LABEL plugin via the plugins admin page
-3. Create a new field via ACF and select the FIELD_LABEL type
+2. Activate the Image Pins plugin via the plugins admin page
+3. Create a new field via ACF and select the Image Pins type
 4. Please refer to the description for more info regarding the field type settings
 
 == Changelog ==

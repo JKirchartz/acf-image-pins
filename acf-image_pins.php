@@ -1,12 +1,12 @@
 <?php
 
 /*
-Plugin Name: Advanced Custom Fields: FIELD_LABEL
-Plugin URI: PLUGIN_URL
-Description: SHORT_DESCRIPTION
+Plugin Name: Advanced Custom Fields: Image Pins
+Plugin URI: https://github.com/JKirchartz/acf-image-pins
+Description: Add pins or markers to an image
 Version: 1.0.0
-Author: AUTHOR_NAME
-Author URI: AUTHOR_URL
+Author: J.Kirchartz
+Author URI: http://JKirchartz.com
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */

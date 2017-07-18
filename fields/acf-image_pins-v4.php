@@ -28,7 +28,7 @@ class acf_field_image_pins extends acf_field {
 	{
 		// vars
 		$this->name = 'image_pins';
-		$this->label = __('FIELD_LABEL');
+		$this->label = __('Image Pins');
 		$this->category = __("Basic",'acf'); // Basic, Content, Choice, etc
 		$this->defaults = array(
 			// add default here to merge into your field.
