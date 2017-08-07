@@ -111,7 +111,7 @@ class acf_field_image_pins extends acf_field_image {
 			'name'			=> 'map_image'
 		));
 
-    	parent::render_field_settings();
+    	parent::render_field_settings( $field );
 	}
 
 
@@ -133,7 +133,7 @@ class acf_field_image_pins extends acf_field_image {
 
 	function render_field( $field ) {
 
-    	parent::render_field();
+    	parent::render_field( $field );
 
 		/*
 		*  Review the data of $field.
