@@ -8,7 +8,7 @@ if( ! defined( 'ABSPATH' ) ) exit;
 if( !class_exists('acf_field_image_pins') ) :
 
 
-class acf_field_image_pins extends acf_field {
+class acf_field_image_pins extends acf_field_image {
 
 
 	/*
@@ -52,7 +52,7 @@ class acf_field_image_pins extends acf_field {
 		*/
 
 		$this->defaults = array(
-			'font_size'	=> 14,
+			'map_image'	=> null,
 		);
 
 
@@ -62,7 +62,7 @@ class acf_field_image_pins extends acf_field {
 		*/
 
 		$this->l10n = array(
-			'error'	=> __('Error! Please enter a higher value', 'acf-image_pins'),
+			'error'	=> __('Error! Please select an image', 'acf-image_pins'),
 		);
 
 
@@ -105,13 +105,13 @@ class acf_field_image_pins extends acf_field {
 		*/
 
 		acf_render_field_setting( $field, array(
-			'label'			=> __('Font Size','acf-image_pins'),
-			'instructions'	=> __('Customise the input font size','acf-image_pins'),
-			'type'			=> 'number',
-			'name'			=> 'font_size',
-			'prepend'		=> 'px',
+			'label'			=> __('Image','acf-image_pins'),
+			'instructions'	=> __('Add pins to Image','acf-image_pins'),
+			'type'			=> 'image',
+			'name'			=> 'map_image'
 		));
 
+    	parent::render_field_settings();
 	}
 
 
@@ -133,6 +133,7 @@ class acf_field_image_pins extends acf_field {
 
 	function render_field( $field ) {
 
+    	parent::render_field();
 
 		/*
 		*  Review the data of $field.
@@ -143,14 +144,6 @@ class acf_field_image_pins extends acf_field {
 			print_r( $field );
 		echo '</pre>';
 
-
-		/*
-		*  Create a simple text input using the 'font_size' setting.
-		*/
-
-		?>
-		<input type="text" name="<?php echo esc_attr($field['name']) ?>" value="<?php echo esc_attr($field['value']) ?>" style="font-size:<?php echo $field['font_size'] ?>px;" />
-		<?php
 	}
 
 
@@ -167,8 +160,6 @@ class acf_field_image_pins extends acf_field {
 	*  @param	n/a
 	*  @return	n/a
 	*/
-
-	/*
 
 	function input_admin_enqueue_scripts() {
 
@@ -187,8 +178,6 @@ class acf_field_image_pins extends acf_field {
 		wp_enqueue_style('acf-input-image_pins');
 
 	}
-
-	*/
 
 
 	/*

@@ -3,6 +3,21 @@
 
 	function initialize_field( $el ) {
 
+    var $pin_instance = $el.easypin({
+      modalWidth: 300,
+      done: function(element) {
+        if ( $('input', element).val() !== '' ) {
+          return true;
+        }
+        return false;
+      }
+    });
+
+    $pin_instance.easypin.event( "get.coordinates", function( $instance, data, params ) {
+      console.log("pin instance", data);
+    });
+
+
 		//$el.doStuff();
 
 	}
