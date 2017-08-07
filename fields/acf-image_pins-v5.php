@@ -44,7 +44,7 @@ class acf_field_image_pins extends acf_field_image {
 		*  category (string) basic | content | choice | relational | jquery | layout | CUSTOM GROUP NAME
 		*/
 
-		$this->category = 'basic';
+		$this->category = 'jquery';
 
 
 		/*
