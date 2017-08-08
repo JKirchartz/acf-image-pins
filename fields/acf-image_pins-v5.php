@@ -8,7 +8,7 @@ if( ! defined( 'ABSPATH' ) ) exit;
 if( !class_exists('acf_field_image_pins') ) :
 
 
-class acf_field_image_pins extends acf_field_image {
+class acf_field_image_pins extends acf_field {
 
 
 	/*
@@ -104,6 +104,8 @@ class acf_field_image_pins extends acf_field_image {
 		*  Please note that you must also have a matching $defaults value for the field name (font_size)
 		*/
 
+        /*
+
 		acf_render_field_setting( $field, array(
 			'label'			=> __('Image','acf-image_pins'),
 			'instructions'	=> __('Add pins to Image','acf-image_pins'),
@@ -111,9 +113,21 @@ class acf_field_image_pins extends acf_field_image {
 			'name'			=> 'map_image'
 		));
 
-    	parent::render_field_settings( $field );
+         */
+
 	}
 
+    /*
+     * add_pins_to_image_field()
+     *
+     * Add pinning to image fields
+     *
+     */
+
+    function add_pins_to_image_field( $field ) {
+        var_dump($field);
+        return $field;
+    }
 
 
 	/*
@@ -133,8 +147,6 @@ class acf_field_image_pins extends acf_field_image {
 
 	function render_field( $field ) {
 
-    	parent::render_field( $field );
-
 		/*
 		*  Review the data of $field.
 		*  This will show what data is available
@@ -143,6 +155,8 @@ class acf_field_image_pins extends acf_field_image {
 		echo '<pre>';
 			print_r( $field );
 		echo '</pre>';
+
+        add_action('acf/render_field/type=image', 'add_pins_to_image_field', 10, 1);
 
 	}
 

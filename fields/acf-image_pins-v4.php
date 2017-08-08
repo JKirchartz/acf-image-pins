@@ -1,107 +1,65 @@
 <?php
 
-// exit if accessed directly
-if( ! defined( 'ABSPATH' ) ) exit;
-
-
-// check if class already exists
-if( !class_exists('acf_field_image_pins') ) :
-
+if( ! class_exists('acf_image_pins') ) :
 
 class acf_field_image_pins extends acf_field {
-
-	// vars
-	var $settings, // will hold info such as dir / path
-		$defaults; // will hold default field options
 
 
 	/*
 	*  __construct
 	*
-	*  Set name / label needed for actions / filters
+	*  This function will setup the field type data
 	*
-	*  @since	3.6
-	*  @date	23/01/13
+	*  @type	function
+	*  @date	5/03/2014
+	*  @since	5.0.0
+	*
+	*  @param	n/a
+	*  @return	n/a
 	*/
 
-	function __construct( $settings )
-	{
+	function __construct($settings) {
+
 		// vars
 		$this->name = 'image_pins';
-		$this->label = __('Image Pins');
-		$this->category = __("Basic",'acf'); // Basic, Content, Choice, etc
+		$this->label = __("Image Pins");
+		$this->category = __('JQuery', 'acf');
 		$this->defaults = array(
-			// add default here to merge into your field.
-			// This makes life easy when creating the field options as you don't need to use any if( isset('') ) logic. eg:
-			//'preview_size' => 'thumbnail'
+			'return_format'	=> 'array',
+			'preview_size'	=> 'thumbnail',
+			'library'		=> 'all',
+			'min_width'		=> 0,
+			'min_height'	=> 0,
+			'min_size'		=> 0,
+			'max_width'		=> 0,
+			'max_height'	=> 0,
+			'max_size'		=> 0,
+			'mime_types'	=> ''
+		);
+		$this->l10n = array(
+			'select'		=> __("Select Image",'acf'),
+			'edit'			=> __("Edit Image",'acf'),
+			'update'		=> __("Update Image",'acf'),
+			'uploadedTo'	=> __("Uploaded to this post",'acf'),
+			'all'			=> __("All images",'acf'),
 		);
 
 
-		// do not delete!
-    	parent::__construct();
+		// filters
+		add_filter('get_media_item_args',				array($this, 'get_media_item_args'));
+		add_filter('wp_prepare_attachment_for_js',		array($this, 'wp_prepare_attachment_for_js'), 10, 3);
 
+        // do not delete!
+        parent::__construct();
 
-    	// settings
-		$this->settings = $settings;
+        // settings
+        $this->settings = $settings;
 
-	}
-
-
-	/*
-	*  create_options()
-	*
-	*  Create extra options for your field. This is rendered when editing a field.
-	*  The value of $field['name'] can be used (like below) to save extra data to the $field
-	*
-	*  @type	action
-	*  @since	3.6
-	*  @date	23/01/13
-	*
-	*  @param	$field	- an array holding all the field's data
-	*/
-
-	function create_options( $field )
-	{
-		// defaults?
-		/*
-		$field = array_merge($this->defaults, $field);
-		*/
-
-		// key is needed in the field names to correctly save the data
-		$key = $field['name'];
-
-
-		// Create Field Options HTML
-		?>
-<tr class="field_option field_option_<?php echo $this->name; ?>">
-	<td class="label">
-		<label><?php _e("Preview Size",'acf'); ?></label>
-		<p class="description"><?php _e("Thumbnail is advised",'acf'); ?></p>
-	</td>
-	<td>
-		<?php
-
-		do_action('acf/create_field', array(
-			'type'		=>	'radio',
-			'name'		=>	'fields['.$key.'][preview_size]',
-			'value'		=>	$field['preview_size'],
-			'layout'	=>	'horizontal',
-			'choices'	=>	array(
-				'thumbnail' => __('Thumbnail'),
-				'something_else' => __('Something Else'),
-			)
-		));
-
-		?>
-	</td>
-</tr>
-		<?php
-
-	}
+    }
 
 
 	/*
-	*  create_field()
+	*  render_field()
 	*
 	*  Create the HTML interface for your field
 	*
@@ -112,76 +70,362 @@ class acf_field_image_pins extends acf_field {
 	*  @date	23/01/13
 	*/
 
-	function create_field( $field )
-	{
-		// defaults?
-		/*
-		$field = array_merge($this->defaults, $field);
-		*/
+	function render_field( $field ) {
 
-		// perhaps use $field['preview_size'] to alter the markup?
+		// vars
+		$uploader = acf_get_setting('uploader');
 
 
-		// create Field HTML
-		?>
-		<div>
+		// enqueue
+		if( $uploader == 'wp' ) {
 
-		</div>
-		<?php
-	}
+			acf_enqueue_uploader();
 
-
-	/*
-	*  input_admin_enqueue_scripts()
-	*
-	*  This action is called in the admin_enqueue_scripts action on the edit screen where your field is created.
-	*  Use this action to add CSS + JavaScript to assist your create_field() action.
-	*
-	*  $info	http://codex.wordpress.org/Plugin_API/Action_Reference/admin_enqueue_scripts
-	*  @type	action
-	*  @since	3.6
-	*  @date	23/01/13
-	*/
-
-	function input_admin_enqueue_scripts()
-	{
-		// Note: This function can be removed if not used
+		}
 
 
 		// vars
-		$url = $this->settings['url'];
-		$version = $this->settings['version'];
+		$url = '';
+		$alt = '';
+		$div = array(
+			'class'					=> 'acf-image_pin-uploader',
+			'data-preview_size'		=> $field['preview_size'],
+			'data-library'			=> $field['library'],
+			'data-mime_types'		=> $field['mime_types'],
+			'data-uploader'			=> $uploader
+		);
 
 
-		// register & include JS
-		wp_register_script( 'acf-input-image_pins', "{$url}assets/js/input.js", array('acf-input'), $version );
-		wp_enqueue_script('acf-input-image_pins');
+		// has value?
+		if( $field['value'] ) {
+
+			// update vars
+			$url = wp_get_attachment_image_src($field['value'], $field['preview_size']);
+			$alt = get_post_meta($field['value'], '_wp_attachment_image_alt', true);
 
 
-		// register & include CSS
-		wp_register_style( 'acf-input-image_pins', "{$url}assets/css/input.css", array('acf-input'), $version );
-		wp_enqueue_style('acf-input-image_pins');
+			// url exists
+			if( $url ) $url = $url[0];
+
+
+			// url exists
+			if( $url ) {
+
+				$div['class'] .= ' has-value';
+
+			}
+
+		}
+
+
+		// get size of preview value
+		$size = acf_get_image_size($field['preview_size']);
+
+?>
+<div <?php acf_esc_attr_e( $div ); ?>>
+	<?php acf_hidden_input(array( 'name' => $field['name'], 'value' => $field['value'] )); ?>
+	<div class="view show-if-value acf-soh" <?php if( $size['width'] ) echo 'style="max-width: '.$size['width'].'px"'; ?>>
+		<img data-name="pin_image" src="<?php echo $url; ?>" alt="<?php echo $alt; ?>"/>
+		<ul class="acf-hl acf-soh-target">
+			<?php if( $uploader != 'basic' ): ?>
+				<li><a class="acf-icon -pencil dark" data-name="edit" href="#" title="<?php _e('Edit', 'acf'); ?>"></a></li>
+			<?php endif; ?>
+			<li><a class="acf-icon -cancel dark" data-name="remove" href="#" title="<?php _e('Remove', 'acf'); ?>"></a></li>
+		</ul>
+	</div>
+	<div class="view hide-if-value">
+		<?php if( $uploader == 'basic' ): ?>
+
+			<?php if( $field['value'] && !is_numeric($field['value']) ): ?>
+				<div class="acf-error-message"><p><?php echo $field['value']; ?></p></div>
+			<?php endif; ?>
+
+			<label class="acf-basic-uploader">
+				<input type="file" name="<?php echo $field['name']; ?>" id="<?php echo $field['id']; ?>" />
+			</label>
+
+		<?php else: ?>
+
+			<p style="margin:0;"><?php _e('No image selected','acf'); ?> <a data-name="add" class="acf-button button" href="#"><?php _e('Add Image','acf'); ?></a></p>
+
+		<?php endif; ?>
+	</div>
+</div>
+<?php
 
 	}
 
 
 	/*
-	*  input_admin_head()
+	*  render_field_settings()
 	*
-	*  This action is called in the admin_head action on the edit screen where your field is created.
-	*  Use this action to add CSS and JavaScript to assist your create_field() action.
+	*  Create extra options for your field. This is rendered when editing a field.
+	*  The value of $field['name'] can be used (like bellow) to save extra data to the $field
 	*
-	*  @info	http://codex.wordpress.org/Plugin_API/Action_Reference/admin_head
 	*  @type	action
 	*  @since	3.6
 	*  @date	23/01/13
+	*
+	*  @param	$field	- an array holding all the field's data
 	*/
 
-	function input_admin_head()
-	{
-		// Note: This function can be removed if not used
+	function render_field_settings( $field ) {
+
+		// clear numeric settings
+		$clear = array(
+			'min_width',
+			'min_height',
+			'min_size',
+			'max_width',
+			'max_height',
+			'max_size'
+		);
+
+		foreach( $clear as $k ) {
+
+			if( empty($field[$k]) ) {
+
+				$field[$k] = '';
+
+			}
+
+		}
+
+
+		// return_format
+		acf_render_field_setting( $field, array(
+			'label'			=> __('Return Value','acf'),
+			'instructions'	=> __('Specify the returned value on front end','acf'),
+			'type'			=> 'radio',
+			'name'			=> 'return_format',
+			'layout'		=> 'horizontal',
+			'choices'		=> array(
+				'array'			=> __("Image Array",'acf'),
+				'url'			=> __("Image URL",'acf'),
+				'id'			=> __("Image ID",'acf')
+			)
+		));
+
+
+		// preview_size
+		acf_render_field_setting( $field, array(
+			'label'			=> __('Preview Size','acf'),
+			'instructions'	=> __('Shown when entering data','acf'),
+			'type'			=> 'select',
+			'name'			=> 'preview_size',
+			'choices'		=> acf_get_image_sizes()
+		));
+
+
+		// library
+		acf_render_field_setting( $field, array(
+			'label'			=> __('Library','acf'),
+			'instructions'	=> __('Limit the media library choice','acf'),
+			'type'			=> 'radio',
+			'name'			=> 'library',
+			'layout'		=> 'horizontal',
+			'choices' 		=> array(
+				'all'			=> __('All', 'acf'),
+				'uploadedTo'	=> __('Uploaded to post', 'acf')
+			)
+		));
+
+
+		// min
+		acf_render_field_setting( $field, array(
+			'label'			=> __('Minimum','acf'),
+			'instructions'	=> __('Restrict which images can be uploaded','acf'),
+			'type'			=> 'text',
+			'name'			=> 'min_width',
+			'prepend'		=> __('Width', 'acf'),
+			'append'		=> 'px',
+		));
+
+		acf_render_field_setting( $field, array(
+			'label'			=> '',
+			'type'			=> 'text',
+			'name'			=> 'min_height',
+			'prepend'		=> __('Height', 'acf'),
+			'append'		=> 'px',
+			'_append' 		=> 'min_width'
+		));
+
+		acf_render_field_setting( $field, array(
+			'label'			=> '',
+			'type'			=> 'text',
+			'name'			=> 'min_size',
+			'prepend'		=> __('File size', 'acf'),
+			'append'		=> 'MB',
+			'_append' 		=> 'min_width'
+		));
+
+
+		// max
+		acf_render_field_setting( $field, array(
+			'label'			=> __('Maximum','acf'),
+			'instructions'	=> __('Restrict which images can be uploaded','acf'),
+			'type'			=> 'text',
+			'name'			=> 'max_width',
+			'prepend'		=> __('Width', 'acf'),
+			'append'		=> 'px',
+		));
+
+		acf_render_field_setting( $field, array(
+			'label'			=> '',
+			'type'			=> 'text',
+			'name'			=> 'max_height',
+			'prepend'		=> __('Height', 'acf'),
+			'append'		=> 'px',
+			'_append' 		=> 'max_width'
+		));
+
+		acf_render_field_setting( $field, array(
+			'label'			=> '',
+			'type'			=> 'text',
+			'name'			=> 'max_size',
+			'prepend'		=> __('File size', 'acf'),
+			'append'		=> 'MB',
+			'_append' 		=> 'max_width'
+		));
+
+
+		// allowed type
+		acf_render_field_setting( $field, array(
+			'label'			=> __('Allowed file types','acf'),
+			'instructions'	=> __('Comma separated list. Leave blank for all types','acf'),
+			'type'			=> 'text',
+			'name'			=> 'mime_types',
+		));
+
 	}
 
+
+	/*
+	*  format_value()
+	*
+	*  This filter is appied to the $value after it is loaded from the db and before it is returned to the template
+	*
+	*  @type	filter
+	*  @since	3.6
+	*  @date	23/01/13
+	*
+	*  @param	$value (mixed) the value which was loaded from the database
+	*  @param	$post_id (mixed) the $post_id from which the value was loaded
+	*  @param	$field (array) the field array holding all the field options
+	*
+	*  @return	$value (mixed) the modified value
+	*/
+
+	function format_value( $value, $post_id, $field ) {
+
+		// bail early if no value
+		if( empty($value) ) return false;
+
+
+		// bail early if not numeric (error message)
+		if( !is_numeric($value) ) return false;
+
+
+		// convert to int
+		$value = intval($value);
+
+
+		// format
+		if( $field['return_format'] == 'url' ) {
+
+			return wp_get_attachment_url( $value );
+
+		} elseif( $field['return_format'] == 'array' ) {
+
+			return acf_get_attachment( $value );
+
+		}
+
+
+		// return
+		return $value;
+
+	}
+
+
+	/*
+	*  get_media_item_args
+	*
+	*  description
+	*
+	*  @type	function
+	*  @date	27/01/13
+	*  @since	3.6.0
+	*
+	*  @param	$vars (array)
+	*  @return	$vars
+	*/
+
+	function get_media_item_args( $vars ) {
+
+	    $vars['send'] = true;
+	    return($vars);
+
+	}
+
+
+	/*
+	*  wp_prepare_attachment_for_js
+	*
+	*  this filter allows ACF to add in extra data to an attachment JS object
+	*  This sneaky hook adds the missing sizes to each attachment in the 3.5 uploader.
+	*  It would be a lot easier to add all the sizes to the 'image_size_names_choose' filter but
+	*  then it will show up on the normal the_content editor
+	*
+	*  @type	function
+	*  @since:	3.5.7
+	*  @date	13/01/13
+	*
+	*  @param	{int}	$post_id
+	*  @return	{int}	$post_id
+	*/
+
+	function wp_prepare_attachment_for_js( $response, $attachment, $meta ) {
+
+		// only for image
+		if( $response['type'] != 'image' ) {
+
+			return $response;
+
+		}
+
+
+		// make sure sizes exist. Perhaps they dont?
+		if( !isset($meta['sizes']) ) {
+
+			return $response;
+
+		}
+
+
+		$attachment_url = $response['url'];
+		$base_url = str_replace( wp_basename( $attachment_url ), '', $attachment_url );
+
+		if( isset($meta['sizes']) && is_array($meta['sizes']) ) {
+
+			foreach( $meta['sizes'] as $k => $v ) {
+
+				if( !isset($response['sizes'][ $k ]) ) {
+
+					$response['sizes'][ $k ] = array(
+						'height'      => $v['height'],
+						'width'       => $v['width'],
+						'url'         => $base_url .  $v['file'],
+						'orientation' => $v['height'] > $v['width'] ? 'portrait' : 'landscape',
+					);
+				}
+
+			}
+
+		}
+
+		return $response;
+	}
 
 	/*
 	*  field_group_admin_enqueue_scripts()
@@ -194,58 +438,25 @@ class acf_field_image_pins extends acf_field {
 	*  @since	3.6
 	*  @date	23/01/13
 	*/
-
-	function field_group_admin_enqueue_scripts()
+	function input_admin_enqueue_scripts()
 	{
-		// Note: This function can be removed if not used
+		// vars
+		$url = $this->settings['url'];
+		$version = $this->settings['version'];
+		// register & include JS
+		wp_register_script( 'image_pins_easypin', "{$url}assets/js/jquery.easypin.js", array('jquery'), $version );
+		wp_register_script( 'acf-input-image_pins', "{$url}assets/js/input.js", array('jquery', 'image_pins_easypin', 'acf-input'), $version );
+        wp_enqueue_script('image_pins_easypin');
+        wp_enqueue_script('acf-input-image_pins');
+		// register & include CSS
+		wp_register_style( 'acf-input-image_pins', "{$url}assets/css/input.css", array('acf-input'), $version );
+		wp_enqueue_style('acf-input-image_pins');
 	}
-
-
-	/*
-	*  field_group_admin_head()
-	*
-	*  This action is called in the admin_head action on the edit screen where your field is edited.
-	*  Use this action to add CSS and JavaScript to assist your create_field_options() action.
-	*
-	*  @info	http://codex.wordpress.org/Plugin_API/Action_Reference/admin_head
-	*  @type	action
-	*  @since	3.6
-	*  @date	23/01/13
-	*/
-
-	function field_group_admin_head()
-	{
-		// Note: This function can be removed if not used
-	}
-
-
-	/*
-	*  load_value()
-	*
-		*  This filter is applied to the $value after it is loaded from the db
-	*
-	*  @type	filter
-	*  @since	3.6
-	*  @date	23/01/13
-	*
-	*  @param	$value - the value found in the database
-	*  @param	$post_id - the $post_id from which the value was loaded
-	*  @param	$field - the field array holding all the field options
-	*
-	*  @return	$value - the value to be saved in the database
-	*/
-
-	function load_value( $value, $post_id, $field )
-	{
-		// Note: This function can be removed if not used
-		return $value;
-	}
-
 
 	/*
 	*  update_value()
 	*
-	*  This filter is applied to the $value before it is updated in the db
+	*  This filter is appied to the $value before it is updated in the db
 	*
 	*  @type	filter
 	*  @since	3.6
@@ -258,125 +469,38 @@ class acf_field_image_pins extends acf_field {
 	*  @return	$value - the modified value
 	*/
 
-	function update_value( $value, $post_id, $field )
-	{
-		// Note: This function can be removed if not used
-		return $value;
+	function update_value( $value, $post_id, $field ) {
+
+		return acf_get_field_type('file')->update_value( $value, $post_id, $field );
+
 	}
 
 
 	/*
-	*  format_value()
+	*  validate_value
 	*
-	*  This filter is applied to the $value after it is loaded from the db and before it is passed to the create_field action
+	*  This function will validate a basic file input
 	*
-	*  @type	filter
-	*  @since	3.6
-	*  @date	23/01/13
+	*  @type	function
+	*  @date	11/02/2014
+	*  @since	5.0.0
 	*
-	*  @param	$value	- the value which was loaded from the database
-	*  @param	$post_id - the $post_id from which the value was loaded
-	*  @param	$field	- the field array holding all the field options
-	*
-	*  @return	$value	- the modified value
+	*  @param	$post_id (int)
+	*  @return	$post_id (int)
 	*/
 
-	function format_value( $value, $post_id, $field )
-	{
-		// defaults?
-		/*
-		$field = array_merge($this->defaults, $field);
-		*/
+	function validate_value( $valid, $value, $field, $input ){
 
-		// perhaps use $field['preview_size'] to alter the $value?
+		return acf_get_field_type('file')->validate_value( $valid, $value, $field, $input );
 
-
-		// Note: This function can be removed if not used
-		return $value;
-	}
-
-
-	/*
-	*  format_value_for_api()
-	*
-	*  This filter is applied to the $value after it is loaded from the db and before it is passed back to the API functions such as the_field
-	*
-	*  @type	filter
-	*  @since	3.6
-	*  @date	23/01/13
-	*
-	*  @param	$value	- the value which was loaded from the database
-	*  @param	$post_id - the $post_id from which the value was loaded
-	*  @param	$field	- the field array holding all the field options
-	*
-	*  @return	$value	- the modified value
-	*/
-
-	function format_value_for_api( $value, $post_id, $field )
-	{
-		// defaults?
-		/*
-		$field = array_merge($this->defaults, $field);
-		*/
-
-		// perhaps use $field['preview_size'] to alter the $value?
-
-
-		// Note: This function can be removed if not used
-		return $value;
-	}
-
-
-	/*
-	*  load_field()
-	*
-	*  This filter is applied to the $field after it is loaded from the database
-	*
-	*  @type	filter
-	*  @since	3.6
-	*  @date	23/01/13
-	*
-	*  @param	$field - the field array holding all the field options
-	*
-	*  @return	$field - the field array holding all the field options
-	*/
-
-	function load_field( $field )
-	{
-		// Note: This function can be removed if not used
-		return $field;
-	}
-
-
-	/*
-	*  update_field()
-	*
-	*  This filter is applied to the $field before it is saved to the database
-	*
-	*  @type	filter
-	*  @since	3.6
-	*  @date	23/01/13
-	*
-	*  @param	$field - the field array holding all the field options
-	*  @param	$post_id - the field group ID (post_type = acf)
-	*
-	*  @return	$field - the modified field
-	*/
-
-	function update_field( $field, $post_id )
-	{
-		// Note: This function can be removed if not used
-		return $field;
 	}
 
 }
 
 
 // initialize
-new acf_field_image_pins( $this->settings );
+acf_register_field_type( 'acf_image_pins' );
 
-
-// class_exists check
-endif;
+endif; // class_exists check
 
 ?>
